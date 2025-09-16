@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EagleEye - Test Frontend</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 600px;
+            width: 90%;
+        }
+        
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #fff, #f0f0f0);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.8;
+            margin-bottom: 30px;
+        }
+        
+        .status {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-left: 10px;
+        }
+        
+        .online {
+            background-color: #4caf50;
+        }
+        
+        .offline {
+            background-color: #f44336;
+        }
+        
+        .button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            margin: 10px;
+            transition: transform 0.2s;
+        }
+        
+        .button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .info {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: left;
+        }
+        
+        .info h3 {
+            margin-bottom: 10px;
+        }
+        
+        .info p {
+            margin: 5px 0;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">E</div>
+        <h1>EagleEye</h1>
+        <p class="subtitle">Advanced Media Management Platform</p>
+        
+        <div class="status">
+            <h3>System Status</h3>
+            <div class="status-item">
+                <span>Backend Server</span>
+                <div class="status-indicator" id="backend-status"></div>
+            </div>
+            <div class="status-item">
+                <span>Frontend React App</span>
+                <div class="status-indicator offline" id="frontend-status"></div>
+            </div>
+        </div>
+        
+        <button class="button" onclick="testBackend()">Test Backend</button>
+        <button class="button" onclick="openReactApp()">Open React App</button>
+        
+        <div class="info">
+            <h3>Setup Progress</h3>
+            <p>✅ Virtual environment created</p>
+            <p>✅ Python dependencies installed</p>
+            <p>✅ Backend server running on port 5000</p>
+            <p id="npm-status">⏳ Frontend dependencies installing...</p>
+            <p id="react-status">⏳ React app starting...</p>
+        </div>
+        
+        <div class="info">
+            <h3>Next Steps</h3>
+            <p>1. Wait for npm install to complete</p>
+            <p>2. Start the React development server</p>
+            <p>3. Open http://localhost:3000 in your browser</p>
+            <p>4. Create an account and start using EagleEye!</p>
+        </div>
+    </div>
+
+    <script>
+        // Test backend connectivity
+        async function testBackend() {
+            try {
+                const response = await fetch('http://localhost:5000/api/health');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('backend-status').className = 'status-indicator online';
+                    alert('Backend is running successfully!\n\n' + JSON.stringify(data, null, 2));
+                } else {
+                    throw new Error('Backend responded with error');
+                }
+            } catch (error) {
+                document.getElementById('backend-status').className = 'status-indicator offline';
+                alert('Backend is not responding. Please check if the server is running.');
+            }
+        }
+        
+        function openReactApp() {
+            window.open('http://localhost:3000', '_blank');
+        }
+        
+        // Auto-test backend on load
+        window.onload = function() {
+            testBackend();
+            
+            // Check if React app is running
+            fetch('http://localhost:3000')
+                .then(response => {
+                    if (response.ok) {
+                        document.getElementById('frontend-status').className = 'status-indicator online';
+                        document.getElementById('react-status').textContent = '✅ React app is running on port 3000';
+                    }
+                })
+                .catch(() => {
+                    // React app not running yet
+                });
+        };
+    </script>
+</body>
+</html>

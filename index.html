@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EagleEye - Advanced Media Management Platform</title>
+    
+    <!-- React and Material Icons -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Material Design Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+            overflow-x: hidden;
+        }
+        
+        /* Startup Animation */
+        .startup-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            animation: fadeOut 3s ease-in-out 2s forwards;
+        }
+        
+        .startup-logo {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(45deg, #fff, #f0f0f0);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 20px;
+            animation: pulse 2s ease-in-out infinite;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        
+        .startup-text {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            animation: slideUp 1s ease-out 0.5s both;
+        }
+        
+        .startup-subtitle {
+            font-size: 1.2rem;
+            opacity: 0.8;
+            animation: slideUp 1s ease-out 1s both;
+        }
+        
+        .loading-bar {
+            width: 300px;
+            height: 4px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 2px;
+            margin-top: 30px;
+            overflow: hidden;
+            animation: slideUp 1s ease-out 1.5s both;
+        }
+        
+        .loading-progress {
+            height: 100%;
+            background: linear-gradient(90deg, #fff, #f0f0f0);
+            border-radius: 2px;
+            animation: loading 2s ease-in-out;
+        }
+        
+        @keyframes fadeOut {
+            to { opacity: 0; visibility: hidden; }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes loading {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+        
+        /* Main App Styles */
+        .app {
+            min-height: 100vh;
+            display: flex;
+            opacity: 0;
+            animation: fadeIn 1s ease-out 3s forwards;
+        }
+        
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+        
+        .sidebar {
+            width: 280px;
+            background: rgba(26, 29, 58, 0.95);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            box-shadow: 5px 0 20px rgba(0,0,0,0.1);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-weight: bold;
+            font-size: 1.5rem;
+            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            margin: 8px 0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: transparent;
+            border: 1px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        .nav-item:hover::before {
+            left: 100%;
+        }
+        
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateX(5px);
+        }
+        
+        .nav-item.active {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3));
+            border-color: rgba(102, 126, 234, 0.5);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+        }
+        
+        .nav-icon {
+            margin-right: 15px;
+            font-size: 1.3rem;
+            color: #667eea;
+        }
+        
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .navbar {
+            background: rgba(26, 29, 58, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+        }
+        
+        .content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+        
+        /* Enhanced Search Bar */
+        .search-container {
+            position: relative;
+            max-width: 800px;
+            margin: 0 auto 40px;
+        }
+        
+        .search-bar {
+            width: 100%;
+            padding: 20px 60px 20px 25px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            color: white;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .search-bar:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .search-bar::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .search-button {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .search-button:hover {
+            transform: translateY(-50%) scale(1.05);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        }
+        
+        /* Video Cards */
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+        
+        .video-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .video-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            border-color: rgba(102, 126, 234, 0.3);
+        }
+        
+        .video-thumbnail {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            overflow: hidden;
+        }
+        
+        .video-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        
+        .video-card:hover .video-thumbnail img {
+            transform: scale(1.05);
+        }
+        
+        .video-duration {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        .video-info {
+            padding: 20px;
+        }
+        
+        .video-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .video-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .video-uploader {
+            font-weight: 500;
+        }
+        
+        .video-views {
+            font-size: 0.85rem;
+        }
+        
+        .quality-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .quality-badge {
+            background: rgba(102, 126, 234, 0.2);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            color: #667eea;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .download-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .download-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .download-video {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        .download-audio {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+        
+        /* Loading and States */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 50px;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            opacity: 0.7;
+        }
+        
+        .no-results .material-icons {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        /* Quality Selection Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal {
+            background: rgba(26, 29, 58, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: scale(0.9) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: background 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .quality-section {
+            margin-bottom: 25px;
+        }
+
+        .quality-section h3 {
+            margin-bottom: 15px;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .quality-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .quality-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .quality-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(102, 126, 234, 0.3);
+            transform: translateX(5px);
+        }
+
+        .quality-info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .quality-label {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .quality-details {
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        .download-size {
+            font-size: 0.9rem;
+            color: #667eea;
+            font-weight: 500;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .app {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+            }
+
+            .video-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .search-bar {
+                padding: 15px 50px 15px 20px;
+            }
+
+            .modal {
+                margin: 20px;
+                width: calc(100% - 40px);
+            }
+
+            .download-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Startup Screen -->
+    <div class="startup-screen" id="startupScreen">
+        <div class="startup-logo">E</div>
+        <div class="startup-text">EagleEye</div>
+        <div class="startup-subtitle">Advanced Media Management Platform</div>
+        <div class="loading-bar">
+            <div class="loading-progress"></div>
+        </div>
+    </div>
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // Utility Functions
+        const formatViews = (views) => {
+            if (!views) return 'Unknown views';
+            if (views >= 1000000) return `${(views / 1000000).toFixed(1)}M views`;
+            if (views >= 1000) return `${(views / 1000).toFixed(1)}K views`;
+            return `${views} views`;
+        };
+
+        const formatDuration = (seconds) => {
+            if (!seconds) return 'Unknown';
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            
+            if (hours > 0) {
+                return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+            return `${minutes}:${secs.toString().padStart(2, '0')}`;
+        };
+
+        // Components
+        const Sidebar = ({ activeTab, setActiveTab }) => {
+            const navItems = [
+                { id: 'search', label: 'Search Videos', icon: 'search' },
+                { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
+                { id: 'downloads', label: 'Downloads', icon: 'download' },
+                { id: 'history', label: 'History', icon: 'history' },
+                { id: 'favorites', label: 'Favorites', icon: 'favorite' },
+                { id: 'settings', label: 'Settings', icon: 'settings' },
+            ];
+
+            return (
+                <div className="sidebar">
+                    <div className="logo">
+                        <div className="logo-icon">E</div>
+                        <div>
+                            <h3>EagleEye</h3>
+                            <small style={{opacity: 0.7}}>Media Management</small>
+                        </div>
+                    </div>
+                    <nav>
+                        {navItems.map(item => (
+                            <div 
+                                key={item.id}
+                                className={`nav-item ${activeTab === item.id ? 'active' : ''}`}
+                                onClick={() => setActiveTab(item.id)}
+                            >
+                                <span className="material-icons nav-icon">{item.icon}</span>
+                                {item.label}
+                            </div>
+                        ))}
+                    </nav>
+                </div>
+            );
+        };
+
+        const Navbar = ({ backendStatus }) => (
+            <div className="navbar">
+                <h2>EagleEye</h2>
+                <div style={{display: 'flex', alignItems: 'center', gap: '15px'}}>
+                    <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                        <span className="material-icons" style={{color: backendStatus ? '#4caf50' : '#f44336', fontSize: '1.2rem'}}>
+                            {backendStatus ? 'wifi' : 'wifi_off'}
+                        </span>
+                        <span style={{fontSize: '0.9rem'}}>{backendStatus ? 'Connected' : 'Disconnected'}</span>
+                    </div>
+                    <span className="material-icons" style={{cursor: 'pointer'}}>account_circle</span>
+                </div>
+            </div>
+        );
+
+        // Quality Selection Modal Component
+        const QualityModal = ({ video, isOpen, onClose, onDownload }) => {
+            const [videoFormats, setVideoFormats] = useState([]);
+            const [audioFormats, setAudioFormats] = useState([]);
+            const [loading, setLoading] = useState(false);
+
+            useEffect(() => {
+                if (isOpen && video) {
+                    fetchFormats();
+                }
+            }, [isOpen, video]);
+
+            const fetchFormats = async () => {
+                setLoading(true);
+                try {
+                    const response = await fetch('http://localhost:5000/api/youtube/formats', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ url: video.url })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success && data.info && data.info.formats) {
+                        setVideoFormats(data.info.formats.video_formats || []);
+                        setAudioFormats(data.info.formats.audio_formats || []);
+                    }
+                } catch (error) {
+                    console.error('Error fetching formats:', error);
+                }
+                setLoading(false);
+            };
+
+            const formatFileSize = (bytes) => {
+                if (!bytes) return 'Unknown size';
+                const sizes = ['B', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(1024));
+                return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${sizes[i]}`;
+            };
+
+            if (!isOpen) return null;
+
+            return (
+                <div className="modal-overlay" onClick={onClose}>
+                    <div className="modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2 className="modal-title">Select Quality</h2>
+                            <button className="close-btn" onClick={onClose}>
+                                <span className="material-icons">close</span>
+                            </button>
+                        </div>
+
+                        {loading ? (
+                            <div className="loading">
+                                <div className="spinner"></div>
+                            </div>
+                        ) : (
+                            <>
+                                {videoFormats.length > 0 && (
+                                    <div className="quality-section">
+                                        <h3>
+                                            <span className="material-icons">videocam</span>
+                                            Video Quality
+                                        </h3>
+                                        <div className="quality-list">
+                                            {videoFormats.map((format, index) => (
+                                                <div
+                                                    key={index}
+                                                    className="quality-item"
+                                                    onClick={() => onDownload(video, 'video', format)}
+                                                >
+                                                    <div className="quality-info">
+                                                        <div className="quality-label">{format.quality}</div>
+                                                        <div className="quality-details">
+                                                            {format.ext?.toUpperCase()} • {format.fps}fps
+                                                            {format.has_audio ? ' • With Audio' : ' • Video Only'}
+                                                        </div>
+                                                    </div>
+                                                    <div className="download-size">
+                                                        {formatFileSize(format.filesize)}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {audioFormats.length > 0 && (
+                                    <div className="quality-section">
+                                        <h3>
+                                            <span className="material-icons">audiotrack</span>
+                                            Audio Quality
+                                        </h3>
+                                        <div className="quality-list">
+                                            {audioFormats.map((format, index) => (
+                                                <div
+                                                    key={index}
+                                                    className="quality-item"
+                                                    onClick={() => onDownload(video, 'audio', format)}
+                                                >
+                                                    <div className="quality-info">
+                                                        <div className="quality-label">{format.quality}</div>
+                                                        <div className="quality-details">
+                                                            {format.ext?.toUpperCase()} • {format.acodec}
+                                                        </div>
+                                                    </div>
+                                                    <div className="download-size">
+                                                        {formatFileSize(format.filesize)}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        // Video Card Component
+        const VideoCard = ({ video, onDownload, onShowQuality }) => {
+            return (
+                <div className="video-card">
+                    <div className="video-thumbnail">
+                        <img src={video.thumbnail || '/api/placeholder/350/200'} alt={video.title} />
+                        <div className="video-duration">{video.duration_str}</div>
+                    </div>
+                    <div className="video-info">
+                        <div className="video-title">{video.title}</div>
+                        <div className="video-meta">
+                            <span className="video-uploader">{video.uploader}</span>
+                            <span className="video-views">{formatViews(video.view_count)}</span>
+                        </div>
+
+                        {video.video_qualities && video.video_qualities.length > 0 && (
+                            <div className="quality-options">
+                                {video.video_qualities.slice(0, 4).map((quality, index) => (
+                                    <span key={index} className="quality-badge">{quality}</span>
+                                ))}
+                                {video.video_qualities.length > 4 && (
+                                    <span className="quality-badge">+{video.video_qualities.length - 4} more</span>
+                                )}
+                            </div>
+                        )}
+
+                        <div className="download-buttons">
+                            <button
+                                className="download-btn download-video"
+                                onClick={() => onShowQuality(video)}
+                            >
+                                <span className="material-icons">videocam</span>
+                                Video
+                            </button>
+                            <button
+                                className="download-btn download-audio"
+                                onClick={() => onDownload(video, 'audio')}
+                            >
+                                <span className="material-icons">audiotrack</span>
+                                Audio
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Search Component
+        const SearchPage = () => {
+            const [query, setQuery] = useState('');
+            const [results, setResults] = useState([]);
+            const [loading, setLoading] = useState(false);
+            const [hasSearched, setHasSearched] = useState(false);
+            const [selectedVideo, setSelectedVideo] = useState(null);
+            const [showQualityModal, setShowQualityModal] = useState(false);
+            const searchInputRef = useRef(null);
+
+            const handleSearch = async () => {
+                if (!query.trim()) return;
+
+                setLoading(true);
+                setHasSearched(true);
+
+                try {
+                    const response = await fetch('http://localhost:5000/api/youtube/search', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ query, limit: 20 })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        setResults(data.results);
+                    } else {
+                        console.error('Search failed:', data.error);
+                        setResults([]);
+                    }
+                } catch (error) {
+                    console.error('Search error:', error);
+                    setResults([]);
+                }
+
+                setLoading(false);
+            };
+
+            const handleDownload = async (video, type, format = null) => {
+                try {
+                    let downloadData = {
+                        url: video.url,
+                        type: type === 'video' ? 'video+audio' : 'audio'
+                    };
+
+                    if (format) {
+                        downloadData.quality = format.quality;
+                        downloadData.format_id = format.format_id;
+                    } else {
+                        downloadData.quality = type === 'video' ? '1080p' : 'best';
+                    }
+
+                    const response = await fetch('http://localhost:5000/api/youtube/download', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(downloadData)
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        const qualityText = format ? format.quality : (type === 'video' ? '1080p' : 'best quality');
+                        alert(`${type === 'video' ? 'Video' : 'Audio'} download started!\n\nTitle: ${video.title}\nQuality: ${qualityText}`);
+                        setShowQualityModal(false);
+                    } else {
+                        alert('Download failed: ' + (data.error || 'Unknown error'));
+                    }
+                } catch (error) {
+                    alert('Download error: ' + error.message);
+                }
+            };
+
+            const handleShowQuality = (video) => {
+                setSelectedVideo(video);
+                setShowQualityModal(true);
+            };
+
+            const handleKeyPress = (e) => {
+                if (e.key === 'Enter') {
+                    handleSearch();
+                }
+            };
+
+            return (
+                <div>
+                    <div className="search-container">
+                        <input
+                            ref={searchInputRef}
+                            type="text"
+                            className="search-bar"
+                            placeholder="Search for videos, music, or any content..."
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                            onKeyPress={handleKeyPress}
+                        />
+                        <button className="search-button" onClick={handleSearch}>
+                            <span className="material-icons">search</span>
+                        </button>
+                    </div>
+
+                    {loading && (
+                        <div className="loading">
+                            <div className="spinner"></div>
+                        </div>
+                    )}
+
+                    {!loading && hasSearched && results.length === 0 && (
+                        <div className="no-results">
+                            <span className="material-icons">search_off</span>
+                            <h3>No results found</h3>
+                            <p>Try different keywords or check your spelling</p>
+                        </div>
+                    )}
+
+                    {!loading && results.length > 0 && (
+                        <div className="video-grid">
+                            {results.map((video, index) => (
+                                <VideoCard
+                                    key={video.id || index}
+                                    video={video}
+                                    onDownload={handleDownload}
+                                    onShowQuality={handleShowQuality}
+                                />
+                            ))}
+                        </div>
+                    )}
+
+                    {!hasSearched && (
+                        <div className="no-results">
+                            <span className="material-icons">search</span>
+                            <h3>Search for any video content</h3>
+                            <p>Enter keywords to find videos, music, tutorials, and more</p>
+                        </div>
+                    )}
+
+                    <QualityModal
+                        video={selectedVideo}
+                        isOpen={showQualityModal}
+                        onClose={() => setShowQualityModal(false)}
+                        onDownload={handleDownload}
+                    />
+                </div>
+            );
+        };
+
+        // Placeholder Pages
+        const PlaceholderPage = ({ title, icon, description }) => (
+            <div style={{textAlign: 'center', padding: '60px 20px'}}>
+                <span className="material-icons" style={{fontSize: '4rem', marginBottom: '20px', opacity: 0.5}}>{icon}</span>
+                <h1>{title}</h1>
+                <p style={{opacity: 0.8, marginBottom: '30px'}}>{description}</p>
+                <button className="download-btn download-video" style={{width: 'auto', padding: '15px 30px'}}>
+                    Coming Soon
+                </button>
+            </div>
+        );
+
+        // Main App Component
+        const App = () => {
+            const [activeTab, setActiveTab] = useState('search');
+            const [backendStatus, setBackendStatus] = useState(false);
+
+            // Check backend status
+            useEffect(() => {
+                const checkBackend = async () => {
+                    try {
+                        const response = await fetch('http://localhost:5000/api/health');
+                        setBackendStatus(response.ok);
+                    } catch (error) {
+                        setBackendStatus(false);
+                    }
+                };
+
+                checkBackend();
+                const interval = setInterval(checkBackend, 10000);
+
+                return () => clearInterval(interval);
+            }, []);
+
+            // Hide startup screen after animation
+            useEffect(() => {
+                const timer = setTimeout(() => {
+                    const startupScreen = document.getElementById('startupScreen');
+                    if (startupScreen) {
+                        startupScreen.style.display = 'none';
+                    }
+                }, 5000);
+
+                return () => clearTimeout(timer);
+            }, []);
+
+            const renderContent = () => {
+                switch (activeTab) {
+                    case 'search':
+                        return <SearchPage />;
+                    case 'dashboard':
+                        return <PlaceholderPage title="Dashboard" icon="dashboard" description="Overview of your downloads and activity" />;
+                    case 'downloads':
+                        return <PlaceholderPage title="Downloads" icon="download" description="Manage your downloaded content" />;
+                    case 'history':
+                        return <PlaceholderPage title="History" icon="history" description="View your search and download history" />;
+                    case 'favorites':
+                        return <PlaceholderPage title="Favorites" icon="favorite" description="Your saved favorite videos" />;
+                    case 'settings':
+                        return <PlaceholderPage title="Settings" icon="settings" description="Configure your preferences" />;
+                    default:
+                        return <SearchPage />;
+                }
+            };
+
+            return (
+                <div className="app">
+                    <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+                    <div className="main-content">
+                        <Navbar backendStatus={backendStatus} />
+                        <div className="content">
+                            {renderContent()}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Render the app
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>

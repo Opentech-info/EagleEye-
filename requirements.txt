@@ -1,0 +1,47 @@
+# ===============================
+# Flask Backend Dependencies
+# ===============================
+Flask==3.0.0
+Flask-CORS==4.0.0
+Flask-SQLAlchemy==3.1.1
+Flask-JWT-Extended==4.6.0
+Flask-Migrate==4.0.5
+Flask-SocketIO==5.3.6
+
+# ===============================
+# Media Processing
+# ===============================
+yt-dlp==2023.12.30
+requests==2.31.0
+httpx==0.25.2
+
+# ===============================
+# Web Scraping & Torrent
+# ===============================
+beautifulsoup4==4.12.2
+cloudscraper==1.2.71
+qbittorrent-api==2025.7.0   # latest stable available on PyPI
+
+# ===============================
+# Audio/Video Processing
+# ===============================
+pydub==0.25.1
+pygame==2.5.2
+
+# ===============================
+# Data Processing
+# ===============================
+python-dateutil==2.8.2
+isodate==0.6.1
+
+# ===============================
+# Utilities
+# ===============================
+python-dotenv==1.0.0
+Pillow==10.1.0
+tqdm==4.66.1
+
+# ===============================
+# Development
+# ===============================
+python-decouple==3.8
