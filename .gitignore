@@ -281,3 +281,62 @@ frontend/build/
 *.db
 *.sqlite
 *.sqlite3
+
+# Test files
+test_*.py
+*_test.py
+test_*.html
+*_test.html
+backend/users_data.json
+
+# Temporary and development files
+*.tmp
+*.temp
+*.bak
+*.backup
+*.swp
+*.swo
+*~
+
+# Cache and runtime
+.cache/
+.parcel-cache/
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Development configuration
+frontend/.env.development
+frontend/.env.production
+frontend/.env.test
+
+# Build and deployment artifacts
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# IDE and editor files
+.vscode/settings.json
+.vscode/launch.json
+.vscode/tasks.json
+.idea/
+*.sublime-*
+*.sublime-project
+*.sublime-workspace
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Git specific
+.gitattributes
+.gitmodules
+.gitignore.backup
