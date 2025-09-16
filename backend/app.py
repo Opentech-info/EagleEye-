@@ -137,116 +137,137 @@ class Download(db.Model):
 @app.route("/")
 def index():
     return render_template_string("""
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EagleEye Backend</title>
-<style>
-    /* Reset and fonts */
-    * {margin:0; padding:0; box-sizing:border-box;}
-    body {font-family: 'Arial', sans-serif; overflow-x:hidden; color:#fff;}
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>EagleEye</title>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.css" rel="stylesheet"/>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick-theme.min.css" rel="stylesheet"/>
+        <style>
+            body, html {
+                margin: 0;
+                padding: 0;
+                height: 100%;
+                font-family: 'Arial', sans-serif;
+                overflow-x: hidden;
+            }
+            .hero {
+                position: relative;
+                height: 100vh;
+                background: url('https://images.unsplash.com/photo-1611254634177-2fdd94a6b9f1?auto=format&fit=crop&w=1950&q=80') center/cover no-repeat;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                color: #fff;
+                text-align: center;
+            }
+            .hero::after {
+                content: "";
+                position: absolute;
+                top:0; left:0; width:100%; height:100%;
+                background: linear-gradient(180deg, rgba(0,0,0,0.6), rgba(0,0,0,0.9));
+                z-index: 1;
+            }
+            .hero-content {
+                position: relative;
+                z-index: 2;
+                max-width: 800px;
+                animation: fadeIn 1.5s ease-in-out;
+            }
+            h1 {
+                font-size: 4rem;
+                font-weight: bold;
+                margin: 0 0 20px;
+            }
+            p {
+                font-size: 1.5rem;
+                margin-bottom: 30px;
+            }
+            .btn {
+                padding: 15px 30px;
+                font-size: 1.2rem;
+                font-weight: bold;
+                background: #e50914;
+                border: none;
+                border-radius: 5px;
+                color: white;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                text-decoration: none;
+            }
+            .btn:hover {
+                background: #f6121d;
+                transform: scale(1.05);
+            }
+            @keyframes fadeIn {
+                from {opacity: 0; transform: translateY(20px);}
+                to {opacity: 1; transform: translateY(0);}
+            }
+            .carousel {
+                margin: 50px auto;
+                max-width: 1200px;
+            }
+            .carousel img {
+                width: 100%;
+                border-radius: 10px;
+            }
+            .carousel .slick-slide {
+                margin: 0 10px;
+            }
+            .carousel .slick-list {
+                margin: 0 -10px;
+            }
+            h2 {
+                color: #fff;
+                margin-left: 20px;
+                margin-bottom: 20px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="hero">
+            <div class="hero-content">
+                <h1>🦅 EagleEye</h1>
+                <p>Unlimited movies, TV shows, and more</p>
+                <a href="/api/docs" class="btn">Get Started</a>
+            </div>
+        </div>
 
-    /* Fullscreen video background */
-    .video-bg {
-        position: fixed;
-        top: 0; left: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        z-index: -2;
-    }
+        <h2>Trending Now</h2>
+        <div class="carousel">
+            <div><img src="https://image.tmdb.org/t/p/w500/5SQD9.jpg" alt="Movie 1"></div>
+            <div><img src="https://image.tmdb.org/t/p/w500/6FL.jpg" alt="Movie 2"></div>
+            <div><img src="https://image.tmdb.org/t/p/w500/7BonApp.jpg" alt="Movie 3"></div>
+            <div><img src="https://image.tmdb.org/t/p/w500/8Aiyaa.jpg" alt="Movie 4"></div>
+            <div><img src="https://image.tmdb.org/t/p/w500/9SexLife.jpg" alt="Movie 5"></div>
+        </div>
 
-    /* Overlay gradient */
-    .overlay {
-        position: fixed;
-        top: 0; left:0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0.2));
-        z-index: -1;
-    }
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.js"></script>
+        <script>
+            $(document).ready(function(){
+                $('.carousel').slick({
+                    slidesToShow: 5,
+                    slidesToScroll: 1,
+                    autoplay: true,
+                    autoplaySpeed: 2000,
+                    arrows: true,
+                    dots: false,
+                    responsive: [
+                        { breakpoint: 1024, settings: { slidesToShow: 4 }},
+                        { breakpoint: 768, settings: { slidesToShow: 3 }},
+                        { breakpoint: 480, settings: { slidesToShow: 2 }}
+                    ]
+                });
+            });
+        </script>
+    </body>
+    </html>
+    """)
 
-    /* Main content */
-    .container {
-        position: relative;
-        top: 50%;
-        transform: translateY(-50%);
-        text-align: center;
-        padding: 20px;
-    }
-    h1 {
-        font-size: 4em;
-        margin-bottom: 20px;
-        text-shadow: 0 0 15px #000;
-    }
-    p {
-        font-size: 1.5em;
-        margin-bottom: 30px;
-        text-shadow: 0 0 10px #000;
-    }
-    .btn {
-        padding: 15px 35px;
-        background: #ff0000;
-        color: #fff;
-        text-decoration: none;
-        font-weight: bold;
-        border-radius: 8px;
-        transition: 0.3s ease-in-out;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-    }
-    .btn:hover {
-        background: #ff4d4d;
-        transform: scale(1.1);
-    }
-
-    /* Carousel */
-    .carousel {
-        margin-top: 50px;
-        display: flex;
-        overflow-x: auto;
-        scroll-behavior: smooth;
-        gap: 20px;
-        padding: 10px 0;
-    }
-    .carousel img {
-        border-radius: 10px;
-        height: 200px;
-        transition: transform 0.3s ease;
-        cursor: pointer;
-    }
-    .carousel img:hover {
-        transform: scale(1.1);
-    }
-</style>
-</head>
-<body>
-
-<!-- Background Video -->
-<video autoplay muted loop class="video-bg">
-    <source src="https://www.w3schools.com/howto/rain.mp4" type="video/mp4">
-</video>
-<div class="overlay"></div>
-
-<div class="container">
-    <h1>🦅 EagleEye</h1>
-    <p>Your backend is running smoothly 🚀</p>
-    <a href="/api/docs" class="btn">View API Docs</a>
-
-    <!-- Movie carousel -->
-    <div class="carousel">
-        <img src="https://via.placeholder.com/300x200?text=Movie+1" alt="Movie 1">
-        <img src="https://via.placeholder.com/300x200?text=Movie+2" alt="Movie 2">
-        <img src="https://via.placeholder.com/300x200?text=Movie+3" alt="Movie 3">
-        <img src="https://via.placeholder.com/300x200?text=Movie+4" alt="Movie 4">
-        <img src="https://via.placeholder.com/300x200?text=Movie+5" alt="Movie 5">
-    </div>
-</div>
-
-</body>
-</html>
-""")
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
@@ -277,10 +298,15 @@ def youtube_search():
     return youtube_service.search_videos(query, limit)
 
 @app.route('/api/youtube/download', methods=['POST'])
-@jwt_required()
 def youtube_download():
     data = request.get_json()
-    current_user_id = get_jwt_identity()
+    
+    # Try to get user ID if authenticated, otherwise allow guest download
+    try:
+        current_user_id = get_jwt_identity()
+    except:
+        current_user_id = None
+    
     return youtube_service.download_video(data, current_user_id)
 
 @app.route('/api/torrent/search', methods=['POST'])
@@ -347,7 +373,6 @@ def download_file(download_id):
     return send_file(download.file_path, as_attachment=True)
 
 @app.route('/api/youtube/info', methods=['POST'])
-@jwt_required()
 def get_video_info():
     data = request.get_json()
     url = data.get('url')
@@ -410,6 +435,16 @@ def get_video_formats():
             return jsonify(video_info), 500
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/youtube/stream/<stream_token>', methods=['GET'])
+def stream_video(stream_token):
+    """Proxy stream video content to avoid 403 errors"""
+    response = youtube_service.stream_video(stream_token)
+    
+    if response is None:
+        return jsonify({'success': False, 'error': 'Stream not found or expired'}), 404
+    
+    return response
 
 @app.route('/api/youtube/download-with-quality', methods=['POST'])
 def download_with_quality():

@@ -216,37 +216,63 @@ class YouTubeService:
             'audio_formats': audio_formats
         }
     
-    def download_video(self, data, user_id):
-        """Download video with progress tracking"""
+    def download_video(self, data, user_id=None):
+        """Download video with proxy streaming to avoid 403 errors"""
         try:
             url = data.get('url')
             quality = data.get('quality', 'best')
-            download_type = data.get('type', 'video')  # video, audio, or video+audio
+            download_type = data.get('type', 'video+audio')  # video, audio, or video+audio
             
             if not url:
                 return {'success': False, 'error': 'URL is required'}
             
-            # Create download record
-            from app import db, Download
-            download_record = Download(
-                user_id=user_id,
-                url=url,
-                status='starting'
-            )
-            db.session.add(download_record)
-            db.session.commit()
+            # Create download history record (optional, if user is authenticated)
+            if user_id:
+                try:
+                    from app import db, Download
+                    download_record = Download(
+                        user_id=user_id,
+                        url=url,
+                        status='completed',
+                        download_type=download_type,
+                        quality=quality
+                    )
+                    db.session.add(download_record)
+                    db.session.commit()
+                except:
+                    # If database operations fail, continue with download
+                    pass
             
-            # Start download in background thread
-            thread = threading.Thread(
-                target=self._download_worker,
-                args=(download_record.id, url, quality, download_type)
-            )
-            thread.start()
+            # Generate proxy stream URL
+            import uuid
+            stream_token = str(uuid.uuid4())
+            
+            # Store stream info in a temporary structure (in production, use Redis or cache)
+            if not hasattr(self, '_stream_cache'):
+                self._stream_cache = {}
+            
+            self._stream_cache[stream_token] = {
+                'url': url,
+                'quality': quality,
+                'download_type': download_type,
+                'timestamp': datetime.now().timestamp()
+            }
+            
+            # Clean up old cache entries (older than 5 minutes)
+            current_time = datetime.now().timestamp()
+            self._stream_cache = {
+                k: v for k, v in self._stream_cache.items() 
+                if current_time - v['timestamp'] < 300
+            }
+            
+            proxy_url = f"/api/youtube/stream/{stream_token}"
+            filename = self._generate_filename(url, download_type)
             
             return {
                 'success': True,
-                'download_id': download_record.id,
-                'message': 'Download started'
+                'download_url': proxy_url,
+                'file_name': filename,
+                'message': 'Proxy stream generated'
             }
             
         except Exception as e:
@@ -328,8 +354,240 @@ class YouTubeService:
                 'error': str(e)
             })
     
+    def _get_direct_stream_url(self, url, quality, download_type):
+        """Get direct stream URL for browser download with quality selection"""
+        try:
+            # Parse quality parameter
+            quality_height = None
+            if quality != 'best':
+                # Extract height from quality (e.g., "4320p" -> 4320)
+                quality_height = int(quality.replace('p', ''))
+            
+            # Configure format selector based on download type and quality
+            if download_type == 'audio':
+                format_selector = 'bestaudio/best'
+                extension = 'mp3'
+            elif download_type == 'video':
+                if quality_height:
+                    format_selector = f'bestvideo[height<={quality_height}]+bestaudio/best'
+                else:
+                    format_selector = 'bestvideo+bestaudio/best'
+                extension = 'mp4'
+            else:  # video+audio
+                if quality_height:
+                    format_selector = f'bestvideo[height<={quality_height}]+bestaudio/best'
+                else:
+                    format_selector = 'best'
+                extension = 'mp4'
+            
+            ydl_opts = {
+                'quiet': True,
+                'format': format_selector,
+                'skip_download': True,
+            }
+            
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(url, download=False)
+                
+                # Get the best format URL
+                stream_url = None
+                filename = None
+                
+                if download_type == 'audio':
+                    # Find best audio format
+                    for fmt in info.get('formats', []):
+                        if fmt.get('acodec') != 'none' and fmt.get('vcodec') == 'none':
+                            stream_url = fmt.get('url')
+                            break
+                else:
+                    # Find video+audio format or separate streams
+                    for fmt in info.get('formats', []):
+                        if fmt.get('vcodec') != 'none' and fmt.get('acodec') != 'none':
+                            # Combined format
+                            stream_url = fmt.get('url')
+                            break
+                    
+                    if not stream_url:
+                        # If no combined format, get the best video
+                        for fmt in info.get('formats', []):
+                            if fmt.get('vcodec') != 'none':
+                                stream_url = fmt.get('url')
+                                break
+                
+                # Generate filename
+                safe_title = "".join(c for c in info.get('title', 'video') if c.isalnum() or c in (' ', '-', '_')).rstrip()
+                filename = f"{safe_title}.{extension}"
+                
+                if stream_url:
+                    return {
+                        'success': True,
+                        'stream_url': stream_url,
+                        'filename': filename,
+                        'title': info.get('title')
+                    }
+                else:
+                    return {
+                        'success': False,
+                        'error': 'No suitable format found'
+                    }
+                
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
+    def generate_filename(self, url, download_type):
+        """Generate safe filename for download"""
+        return self._generate_filename(url, download_type)
+    
+    def _generate_filename(self, url, download_type):
+        """Generate safe filename for download"""
+        try:
+            # Get video title
+            ydl_opts = {
+                'quiet': True,
+                'skip_download': True,
+            }
+            
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(url, download=False)
+                title = info.get('title', 'video')
+                
+                # Clean title for filename
+                safe_title = "".join(c for c in title if c.isalnum() or c in (' ', '-', '_')).rstrip()
+                
+                # Add extension based on download type
+                if download_type == 'audio':
+                    return f"{safe_title}.mp3"
+                else:
+                    return f"{safe_title}.mp4"
+                    
+        except Exception:
+            # Fallback filename
+            return f"youtube_video_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
+    
+    def get_stream_info(self, stream_token):
+        """Get stream information from cache"""
+        if not hasattr(self, '_stream_cache'):
+            return None
+            
+        # Clean up old cache entries first
+        current_time = datetime.now().timestamp()
+        self._stream_cache = {
+            k: v for k, v in self._stream_cache.items() 
+            if current_time - v['timestamp'] < 300
+        }
+        
+        return self._stream_cache.get(stream_token)
+    
+    def stream_video(self, stream_token):
+        """Stream video content through proxy to avoid 403 errors"""
+        from flask import Response, stream_with_context
+        
+        stream_info = self.get_stream_info(stream_token)
+        if not stream_info:
+            return None
+        
+        url = stream_info['url']
+        quality = stream_info['quality']
+        download_type = stream_info['download_type']
+        
+        try:
+            # Parse quality parameter
+            quality_height = None
+            if quality != 'best':
+                quality_height = int(quality.replace('p', ''))
+            
+            # Configure format selector based on download type and quality
+            if download_type == 'audio':
+                format_selector = 'bestaudio/best'
+                extension = 'mp3'
+            elif download_type == 'video':
+                if quality_height:
+                    format_selector = f'bestvideo[height<={quality_height}]+bestaudio/best'
+                else:
+                    format_selector = 'bestvideo+bestaudio/best'
+                extension = 'mp4'
+            else:  # video+audio
+                if quality_height:
+                    format_selector = f'bestvideo[height<={quality_height}]+bestaudio/best'
+                else:
+                    format_selector = 'best'
+                extension = 'mp4'
+            
+            # yt-dlp options for streaming
+            ydl_opts = {
+                'format': format_selector,
+                'quiet': True,
+                'no_warnings': True,
+                'outtmpl': '-',
+                'noplaylist': True,
+            }
+            
+            def generate():
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    info_dict = ydl.extract_info(url, download=False)
+                    
+                    # Get the actual stream URL with proper authentication
+                    for fmt in info_dict.get('formats', []):
+                        if download_type == 'audio':
+                            if fmt.get('acodec') != 'none' and fmt.get('vcodec') == 'none':
+                                stream_url = fmt.get('url')
+                                break
+                        else:
+                            if fmt.get('vcodec') != 'none' and fmt.get('acodec') != 'none':
+                                stream_url = fmt.get('url')
+                                break
+                    
+                    if not stream_url:
+                        # Fallback to best available
+                        for fmt in info_dict.get('formats', []):
+                            if fmt.get('url'):
+                                stream_url = fmt.get('url')
+                                break
+                    
+                    if stream_url:
+                        # Use requests to stream with proper headers
+                        import requests
+                        
+                        headers = {
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                            'Accept': '*/*',
+                            'Accept-Language': 'en-US,en;q=0.9',
+                            'Accept-Encoding': 'gzip, deflate, br',
+                            'Connection': 'keep-alive',
+                            'Sec-Fetch-Dest': 'empty',
+                            'Sec-Fetch-Mode': 'cors',
+                            'Sec-Fetch-Site': 'cross-site',
+                        }
+                        
+                        # Stream the content
+                        with requests.get(stream_url, headers=headers, stream=True) as r:
+                            r.raise_for_status()
+                            for chunk in r.iter_content(chunk_size=8192):
+                                yield chunk
+            
+            filename = self._generate_filename(url, download_type)
+            
+            response = Response(
+                stream_with_context(generate()),
+                mimetype='application/octet-stream',
+                headers={
+                    'Content-Disposition': f'attachment; filename="{filename}"',
+                    'Content-Type': 'application/octet-stream',
+                    'Content-Transfer-Encoding': 'binary',
+                }
+            )
+            
+            return response
+            
+        except Exception as e:
+            print(f"Streaming error: {e}")
+            return None
+    
     def get_stream_url(self, video_url):
-        """Get direct stream URL for video"""
+        """Get direct stream URL for video (legacy method)"""
         try:
             ydl_opts = {
                 'quiet': True,

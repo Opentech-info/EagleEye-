@@ -37,7 +37,7 @@ const YouTubeDownloader: React.FC = () => {
     watch,
   } = useForm<DownloadFormData>({
     defaultValues: {
-      quality: '720p',
+      quality: '1080p',
       type: 'video+audio',
     },
   });
@@ -69,8 +69,27 @@ const YouTubeDownloader: React.FC = () => {
     try {
       const response = await youtubeAPI.download(data);
       if (response.data.success) {
-        toast.success('Download started successfully!');
-        // Here you would typically listen to WebSocket events for progress updates
+        // Create a direct download link
+        const downloadUrl = response.data.download_url;
+        const fileName = response.data.file_name;
+        
+        // Create a temporary anchor element to trigger browser download
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = fileName;
+        link.target = '_blank';
+        
+        // Trigger the download
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        toast.success('Download started successfully! Check your browser downloads.');
+        
+        // Reset progress after a delay
+        setTimeout(() => {
+          setDownloadProgress(0);
+        }, 3000);
       } else {
         toast.error(response.data.error);
       }
@@ -177,12 +196,15 @@ const YouTubeDownloader: React.FC = () => {
                   <Select
                     {...register('quality')}
                     label="Quality"
-                    defaultValue="720p"
+                    defaultValue="1080p"
                   >
                     <MenuItem value="best">Best Available</MenuItem>
-                    <MenuItem value="1080p">1080p</MenuItem>
-                    <MenuItem value="720p">720p</MenuItem>
-                    <MenuItem value="480p">480p</MenuItem>
+                    <MenuItem value="4320p">4320p (8K)</MenuItem>
+                    <MenuItem value="2160p">2160p (4K)</MenuItem>
+                    <MenuItem value="1440p">1440p (2K)</MenuItem>
+                    <MenuItem value="1080p">1080p (Full HD)</MenuItem>
+                    <MenuItem value="720p">720p (HD)</MenuItem>
+                    <MenuItem value="480p">480p (SD)</MenuItem>
                     <MenuItem value="360p">360p</MenuItem>
                   </Select>
                 </FormControl>
