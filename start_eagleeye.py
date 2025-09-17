@@ -42,7 +42,7 @@ def check_dependencies():
         
         # Try to install dependencies if needed
         try:
-            import flask
+           
             print("✅ Flask is installed")
         except ImportError:
             print("📥 Installing backend dependencies...")

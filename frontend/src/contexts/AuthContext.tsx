@@ -47,10 +47,11 @@ type AuthAction =
   | { type: 'UPDATE_USER'; payload: User };
 
 // Initial state
+const token = localStorage.getItem('token');
 const initialState: AuthState = {
   user: null,
-  token: localStorage.getItem('token'),
-  isAuthenticated: false,
+  token: token,
+  isAuthenticated: !!token, // Set to true if token exists
   loading: true,
 };
 
@@ -103,27 +104,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Check if user is authenticated on app load
   useEffect(() => {
     const checkAuth = async () => {
-      const token = localStorage.getItem('token');
-      if (token) {
-        try {
-          const response = await authAPI.getProfile();
-          if (response.data.success) {
-            dispatch({
-              type: 'LOGIN_SUCCESS',
-              payload: {
-                user: response.data.user,
-                token,
-              },
-            });
-          } else {
+      try {
+        const token = localStorage.getItem('token');
+        if (token) {
+          // Set a timeout to prevent infinite loading
+          const timeout = setTimeout(() => {
+            dispatch({ type: 'SET_LOADING', payload: false });
+          }, 5000);
+
+          try {
+            const response = await authAPI.getProfile();
+            clearTimeout(timeout);
+            
+            if (response.data.success) {
+              dispatch({
+                type: 'LOGIN_SUCCESS',
+                payload: {
+                  user: response.data.user,
+                  token,
+                },
+              });
+            } else {
+              localStorage.removeItem('token');
+              dispatch({ type: 'LOGIN_FAILURE' });
+            }
+          } catch (error) {
+            clearTimeout(timeout);
             localStorage.removeItem('token');
             dispatch({ type: 'LOGIN_FAILURE' });
           }
-        } catch (error) {
-          localStorage.removeItem('token');
-          dispatch({ type: 'LOGIN_FAILURE' });
+        } else {
+          dispatch({ type: 'SET_LOADING', payload: false });
         }
-      } else {
+      } catch (error) {
         dispatch({ type: 'SET_LOADING', payload: false });
       }
     };
