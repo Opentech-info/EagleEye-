@@ -135,84 +135,199 @@ class Download(db.Model):
 # Routes
 # Note: app is already created above with create_app()
 @app.route("/")
-def index():
+def home():
     return render_template_string("""
     <!DOCTYPE html>
     <html lang="en">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>EagleEye</title>
+        <title>EagleEye Backend</title>
         <link href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.css" rel="stylesheet"/>
         <link href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick-theme.min.css" rel="stylesheet"/>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
         <style>
             body, html {
                 margin: 0;
                 padding: 0;
-                height: 100%;
-                font-family: 'Arial', sans-serif;
+                font-family: 'Roboto', sans-serif;
+                background-color: #141414;
+                color: #fff;
                 overflow-x: hidden;
             }
+
+            /* NAVIGATION BAR */
+            .navbar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 20px 40px;
+                z-index: 1000;
+                background: linear-gradient(to bottom, rgba(0,0,0,0.9), rgba(0,0,0,0));
+            }
+            .navbar .logo {
+                font-size: 2rem;
+                font-weight: bold;
+                color: #e50914;
+                text-decoration: none;
+            }
+            .navbar ul {
+                list-style: none;
+                display: flex;
+                gap: 25px;
+                margin: 0;
+                padding: 0;
+            }
+            .navbar ul li {
+                font-size: 1rem;
+                cursor: pointer;
+                transition: color 0.3s;
+            }
+            .navbar ul li:hover {
+                color: #e50914;
+            }
+            .navbar .nav-actions {
+                display: flex;
+                gap: 15px;
+            }
+            .navbar .nav-actions a {
+                padding: 8px 18px;
+                font-size: 0.9rem;
+                border-radius: 20px;
+                text-decoration: none;
+                font-weight: 600;
+                transition: all 0.3s ease;
+            }
+            .btn-signin {
+                background: transparent;
+                border: 1px solid #fff;
+                color: #fff;
+            }
+            .btn-signin:hover {
+                background: #fff;
+                color: #000;
+            }
+            .btn-frontend {
+                background: #e50914;
+                color: #fff;
+            }
+            .btn-frontend:hover {
+                background: #f6121d;
+                transform: scale(1.05);
+            }
+
+            /* HERO SECTION */
             .hero {
                 position: relative;
                 height: 100vh;
-                background: url('https://images.unsplash.com/photo-1611254634177-2fdd94a6b9f1?auto=format&fit=crop&w=1950&q=80') center/cover no-repeat;
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
                 align-items: center;
-                color: #fff;
                 text-align: center;
+                background: url('https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1950&q=80') center/cover no-repeat;
             }
             .hero::after {
                 content: "";
                 position: absolute;
                 top:0; left:0; width:100%; height:100%;
-                background: linear-gradient(180deg, rgba(0,0,0,0.6), rgba(0,0,0,0.9));
+                background: linear-gradient(180deg, rgba(0,0,0,0.6), rgba(0,0,0,0.95));
                 z-index: 1;
             }
             .hero-content {
                 position: relative;
                 z-index: 2;
-                max-width: 800px;
-                animation: fadeIn 1.5s ease-in-out;
+                max-width: 900px;
+                padding: 20px;
             }
             h1 {
-                font-size: 4rem;
-                font-weight: bold;
+                font-size: 3.5rem;
+                font-weight: 700;
                 margin: 0 0 20px;
+                text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
             }
             p {
-                font-size: 1.5rem;
-                margin-bottom: 30px;
+                font-size: 1.3rem;
+                margin-bottom: 25px;
+                text-shadow: 1px 1px 6px rgba(0,0,0,0.7);
+            }
+
+            /* HERO SEARCH + BUTTON */
+            .hero-search {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                gap: 10px;
+                margin-top: 20px;
+            }
+            .hero-search input {
+                padding: 15px;
+                border: none;
+                border-radius: 30px;
+                width: 320px;
+                max-width: 90%;
+                outline: none;
+                font-size: 1rem;
+                background: rgba(255,255,255,0.2);
+                color: #fff;
+                transition: all 0.3s ease;
+            }
+            .hero-search input:focus {
+                background: rgba(255,255,255,0.3);
+                width: 400px;
             }
             .btn {
                 padding: 15px 30px;
-                font-size: 1.2rem;
+                font-size: 1rem;
                 font-weight: bold;
                 background: #e50914;
                 border: none;
-                border-radius: 5px;
+                border-radius: 30px;
                 color: white;
                 cursor: pointer;
                 transition: all 0.3s ease;
                 text-decoration: none;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.4);
             }
             .btn:hover {
                 background: #f6121d;
                 transform: scale(1.05);
+                box-shadow: 0 6px 20px rgba(0,0,0,0.6);
             }
-            @keyframes fadeIn {
-                from {opacity: 0; transform: translateY(20px);}
-                to {opacity: 1; transform: translateY(0);}
-            }
-            .carousel {
+
+            /* CAROUSEL SECTIONS */
+            .carousel-section {
                 margin: 50px auto;
                 max-width: 1200px;
+                padding: 0 20px;
             }
-            .carousel img {
-                width: 100%;
+            h2 {
+                color: #fff;
+                margin-left: 20px;
+                margin-bottom: 20px;
+                font-weight: 700;
+                text-shadow: 1px 1px 4px rgba(0,0,0,0.6);
+            }
+            .carousel-card {
+                background: #222;
                 border-radius: 10px;
+                padding: 20px;
+                text-align: center;
+                color: #fff;
+                font-size: 1.1rem;
+                height: 200px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                transition: transform 0.3s, box-shadow 0.3s;
+            }
+            .carousel-card:hover {
+                transform: scale(1.05);
+                box-shadow: 0 8px 25px rgba(0,0,0,0.7);
             }
             .carousel .slick-slide {
                 margin: 0 10px;
@@ -220,50 +335,48 @@ def index():
             .carousel .slick-list {
                 margin: 0 -10px;
             }
-            h2 {
-                color: #fff;
-                margin-left: 20px;
-                margin-bottom: 20px;
+
+            /* RESPONSIVE */
+            @media (max-width: 768px) {
+                h1 { font-size: 2.2rem; }
+                p { font-size: 1rem; }
+                .navbar ul { display: none; }
+                .hero-search { flex-direction: column; }
             }
         </style>
     </head>
     <body>
-        <div class="hero">
-            <div class="hero-content">
-                <h1>🦅 EagleEye</h1>
-                <p>Unlimited movies, TV shows, and more</p>
-                <a href="/api/docs" class="btn">Get Started</a>
+        <!-- NAVBAR -->
+        <div class="navbar">
+            <a href="/home" class="logo">🦅 EagleEye</a>
+            <ul>
+                <li>Dashboard</li>
+                <li>APIs</li>
+                <li>Docs</li>
+                <li>Logs</li>
+                <li>Settings</li>
+            </ul>
+            <div class="nav-actions">
+                <a href="/signin" class="btn-signin">Sign In (Admin)</a>
+                <a href="/" class="btn-frontend">Check Frontend</a>
             </div>
         </div>
 
-        <h2>Trending Now</h2>
-        <div class="carousel">
-            <div><img src="https://image.tmdb.org/t/p/w500/5SQD9.jpg" alt="Movie 1"></div>
-            <div><img src="https://image.tmdb.org/t/p/w500/6FL.jpg" alt="Movie 2"></div>
-            <div><img src="https://image.tmdb.org/t/p/w500/7BonApp.jpg" alt="Movie 3"></div>
-            <div><img src="https://image.tmdb.org/t/p/w500/8Aiyaa.jpg" alt="Movie 4"></div>
-            <div><img src="https://image.tmdb.org/t/p/w500/9SexLife.jpg" alt="Movie 5"></div>
+        <!-- HERO -->
+        <div class="hero">
+            <div class="hero-content">
+                <h1>Backend Intelligence for Your Services</h1>
+                <p>Manage APIs, monitor logs, and optimize performance — all in one place.</p>
+                <div class="hero-search">
+                    <input type="text" placeholder="Search APIs, endpoints, or docs...">
+                    <a href="/api/docs" class="btn">Get Started</a>
+                </div>
+            </div>
         </div>
 
+        <!-- JS -->
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.js"></script>
-        <script>
-            $(document).ready(function(){
-                $('.carousel').slick({
-                    slidesToShow: 5,
-                    slidesToScroll: 1,
-                    autoplay: true,
-                    autoplaySpeed: 2000,
-                    arrows: true,
-                    dots: false,
-                    responsive: [
-                        { breakpoint: 1024, settings: { slidesToShow: 4 }},
-                        { breakpoint: 768, settings: { slidesToShow: 3 }},
-                        { breakpoint: 480, settings: { slidesToShow: 2 }}
-                    ]
-                });
-            });
-        </script>
     </body>
     </html>
     """)

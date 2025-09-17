@@ -23,44 +23,38 @@ import Settings from './pages/Settings/Settings';
 // Hooks
 import { useAuth } from './hooks/useAuth';
 
-// Types
-interface ProtectedRouteProps {
-  children: React.ReactNode;
-}
-
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
-
-  if (loading) {
-    return <LoadingScreen />;
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
-  return <>{children}</>;
-};
-
-const PublicRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
-
-  if (loading) {
-    return <LoadingScreen />;
-  }
-
-  if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  return <>{children}</>;
-};
 
 const App: React.FC = () => {
   const { isAuthenticated, loading } = useAuth();
 
-  if (loading) {
+  // Add a timeout to prevent infinite loading
+  const [showFallback, setShowFallback] = React.useState(false);
+  
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      if (loading) {
+        setShowFallback(true);
+      }
+    }, 3000);
+    
+    return () => clearTimeout(timer);
+  }, [loading]);
+
+  if (loading && !showFallback) {
     return <LoadingScreen />;
+  }
+  
+  // If still loading after timeout, show login page as fallback
+  if (showFallback) {
+    return (
+      <Box sx={{ width: '100%' }}>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </Box>
+    );
   }
 
   return (
@@ -88,70 +82,14 @@ const App: React.FC = () => {
                 }}
               >
                 <Routes>
-                  <Route
-                    path="/dashboard"
-                    element={
-                      <ProtectedRoute>
-                        <Dashboard />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/youtube/download"
-                    element={
-                      <ProtectedRoute>
-                        <YouTubeDownloader />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/youtube/search"
-                    element={
-                      <ProtectedRoute>
-                        <YouTubeSearch />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/torrent/search"
-                    element={
-                      <ProtectedRoute>
-                        <TorrentSearch />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/media/streaming"
-                    element={
-                      <ProtectedRoute>
-                        <MediaStreaming />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/downloads"
-                    element={
-                      <ProtectedRoute>
-                        <Downloads />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/profile"
-                    element={
-                      <ProtectedRoute>
-                        <Profile />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/settings"
-                    element={
-                      <ProtectedRoute>
-                        <Settings />
-                      </ProtectedRoute>
-                    }
-                  />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/youtube/download" element={<YouTubeDownloader />} />
+                  <Route path="/youtube/search" element={<YouTubeSearch />} />
+                  <Route path="/torrent/search" element={<TorrentSearch />} />
+                  <Route path="/media/streaming" element={<MediaStreaming />} />
+                  <Route path="/downloads" element={<Downloads />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/settings" element={<Settings />} />
                   <Route path="/" element={<Navigate to="/dashboard" replace />} />
                   <Route path="*" element={<Navigate to="/dashboard" replace />} />
                 </Routes>
@@ -168,22 +106,9 @@ const App: React.FC = () => {
             style={{ width: '100%' }}
           >
             <Routes>
-              <Route
-                path="/login"
-                element={
-                  <PublicRoute>
-                    <Login />
-                  </PublicRoute>
-                }
-              />
-              <Route
-                path="/register"
-                element={
-                  <PublicRoute>
-                    <Register />
-                  </PublicRoute>
-                }
-              />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/" element={<Navigate to="/login" replace />} />
               <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>
           </motion.div>

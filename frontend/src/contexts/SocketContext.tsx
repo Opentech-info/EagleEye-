@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { useAuth } from './AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import toast from 'react-hot-toast';
 
 interface SocketContextType {
@@ -18,62 +18,71 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   useEffect(() => {
     if (isAuthenticated && token) {
-      // Create socket connection
-      const newSocket = io('http://localhost:5000', {
-        auth: {
-          token,
-        },
-        transports: ['websocket'],
-      });
+      // Create socket connection with error handling
+      try {
+        const newSocket = io('http://localhost:5000', {
+          auth: {
+            token,
+          },
+          transports: ['websocket'],
+          timeout: 5000, // Add timeout
+          reconnection: true,
+          reconnectionAttempts: 3,
+          reconnectionDelay: 1000,
+        });
 
-      // Connection event handlers
-      newSocket.on('connect', () => {
-        setIsConnected(true);
-        console.log('Connected to server');
-      });
+        // Connection event handlers
+        newSocket.on('connect', () => {
+          setIsConnected(true);
+          console.log('Connected to server');
+        });
 
-      newSocket.on('disconnect', () => {
-        setIsConnected(false);
-        console.log('Disconnected from server');
-      });
+        newSocket.on('disconnect', () => {
+          setIsConnected(false);
+          console.log('Disconnected from server');
+        });
 
-      newSocket.on('connect_error', (error) => {
-        console.error('Connection error:', error);
-        setIsConnected(false);
-      });
+        newSocket.on('connect_error', (error) => {
+          console.error('Connection error:', error);
+          setIsConnected(false);
+        });
 
-      // Download progress events
-      newSocket.on('download_progress', (data) => {
-        // Handle download progress updates
-        console.log('Download progress:', data);
-        // You can dispatch this to a downloads context or state management
-      });
+        // Download progress events
+        newSocket.on('download_progress', (data) => {
+          // Handle download progress updates
+          console.log('Download progress:', data);
+          // You can dispatch this to a downloads context or state management
+        });
 
-      newSocket.on('download_complete', (data) => {
-        toast.success(`Download completed: ${data.file_path}`);
-        console.log('Download completed:', data);
-      });
+        newSocket.on('download_complete', (data) => {
+          toast.success(`Download completed: ${data.file_path}`);
+          console.log('Download completed:', data);
+        });
 
-      newSocket.on('download_error', (data) => {
-        toast.error(`Download failed: ${data.error}`);
-        console.error('Download error:', data);
-      });
+        newSocket.on('download_error', (data) => {
+          toast.error(`Download failed: ${data.error}`);
+          console.error('Download error:', data);
+        });
 
-      // Server status updates
-      newSocket.on('status', (data) => {
-        console.log('Server status:', data);
-      });
+        // Server status updates
+        newSocket.on('status', (data) => {
+          console.log('Server status:', data);
+        });
 
-      socketRef.current = newSocket;
-      setSocket(newSocket);
+        socketRef.current = newSocket;
+        setSocket(newSocket);
 
-      // Cleanup on unmount or auth change
-      return () => {
-        newSocket.close();
-        socketRef.current = null;
-        setSocket(null);
-        setIsConnected(false);
-      };
+        // Cleanup on unmount or auth change
+        return () => {
+          newSocket.close();
+          socketRef.current = null;
+          setSocket(null);
+          setIsConnected(false);
+        };
+      } catch (error) {
+        console.error('Failed to create socket connection:', error);
+        // Don't block the app if socket fails
+      }
     } else {
       // Disconnect if not authenticated
       if (socketRef.current) {
@@ -83,7 +92,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setIsConnected(false);
       }
     }
-  }, [isAuthenticated, token, socket]);
+  }, [isAuthenticated, token]);
 
   const value: SocketContextType = {
     socket,
