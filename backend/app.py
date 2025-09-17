@@ -134,7 +134,6 @@ class Download(db.Model):
 
 # Routes
 # Note: app is already created above with create_app()
-
 @app.route("/")
 def home():
     return render_template_string("""
@@ -359,7 +358,7 @@ def home():
             </ul>
             <div class="nav-actions">
                 <a href="/signin" class="btn-signin">Sign In (Admin)</a>
-                <a href="../index.html" class="btn-frontend">Check Frontend</a>
+                <a href="/" class="btn-frontend">Check Frontend</a>
             </div>
         </div>
 
